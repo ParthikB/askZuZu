@@ -55,6 +55,30 @@ export async function updateTimeSpent(logId: number, timeSpentSeconds: number): 
   }
 }
 
+export type FeedbackRating = 'up' | 'down';
+
+/**
+ * Records thumbs-up / thumbs-down feedback and optional reason tags
+ * for a given log row. Tags are only present on thumbs-down.
+ */
+export async function updateFeedback(
+  logId: number,
+  rating: FeedbackRating,
+  tags: string[]
+): Promise<void> {
+  if (!sql) return;
+  try {
+    await sql`
+      UPDATE usage_logs
+      SET feedback_rating = ${rating},
+          feedback_tags   = ${tags}
+      WHERE id = ${logId}
+    `;
+  } catch (err) {
+    console.error('DB updateFeedback error:', err);
+  }
+}
+
 /** Derives 'mobile' or 'desktop' from a User-Agent string. */
 export function detectDeviceType(userAgent: string): DeviceType {
   return /mobile|android|iphone|ipad|tablet/i.test(userAgent) ? 'mobile' : 'desktop';
