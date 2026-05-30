@@ -5,6 +5,7 @@ import ZuZu, { ZuZuExpression } from './ZuZu';
 
 interface AskScreenProps {
   age: number;
+  sessionToken: string;
   onReset: () => void;
 }
 
@@ -13,21 +14,19 @@ type ScreenState = 'idle' | 'loading' | 'answered' | 'error';
 interface AnswerResult {
   answer: string;
   wasRedirected: boolean;
+  logId: number | null;
 }
 
-export default function AskScreen({ age, onReset }: AskScreenProps) {
+export default function AskScreen({ age, sessionToken, onReset }: AskScreenProps) {
   const [question, setQuestion] = useState('');
   const [screenState, setScreenState] = useState<ScreenState>('idle');
   const [result, setResult] = useState<AnswerResult | null>(null);
+  const [answerDisplayedAt, setAnswerDisplayedAt] = useState<number | null>(null);
   const answerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Auto-focus the input on mount
-  useEffect(() => {
-    inputRef.current?.focus();
-  }, []);
+  useEffect(() => { inputRef.current?.focus(); }, []);
 
-  // Scroll answer into view after it appears
   useEffect(() => {
     if (screenState === 'answered' || screenState === 'error') {
       setTimeout(() => answerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 100);
@@ -47,29 +46,39 @@ export default function AskScreen({ age, onReset }: AskScreenProps) {
 
     setScreenState('loading');
     setResult(null);
+    setAnswerDisplayedAt(null);
 
     try {
       const res = await fetch('/api/ask', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: trimmed, age }),
+        body: JSON.stringify({ question: trimmed, age, sessionToken }),
       });
 
       const data: AnswerResult = await res.json();
       setResult(data);
+      setAnswerDisplayedAt(Date.now());
       setScreenState('answered');
     } catch {
-      setResult({
-        answer: "ZuZu is taking a little nap right now — try again in a moment! 💤",
-        wasRedirected: false,
-      });
+      setResult({ answer: "ZuZu is taking a little nap right now — try again in a moment! 💤", wasRedirected: false, logId: null });
       setScreenState('error');
     }
   }
 
   function handleAskAnother() {
+    // Fire-and-forget: record how long the user spent reading the answer
+    if (result?.logId && answerDisplayedAt) {
+      const timeSpentSeconds = Math.round((Date.now() - answerDisplayedAt) / 1000);
+      fetch('/api/log/time', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ logId: result.logId, timeSpentSeconds }),
+      }).catch(() => {});
+    }
+
     setQuestion('');
     setResult(null);
+    setAnswerDisplayedAt(null);
     setScreenState('idle');
     setTimeout(() => inputRef.current?.focus(), 50);
   }
@@ -81,7 +90,6 @@ export default function AskScreen({ age, onReset }: AskScreenProps) {
   return (
     <div className="min-h-screen bg-zuzu-bg flex flex-col items-center px-4 py-8 gap-6">
 
-      {/* Top bar: ZuZu + age indicator */}
       <div className="w-full max-w-xl flex items-center justify-between">
         <button
           onClick={onReset}
@@ -90,24 +98,14 @@ export default function AskScreen({ age, onReset }: AskScreenProps) {
         >
           ← Back
         </button>
-        <span className="text-slate-500 font-semibold text-base">
-          Age {age}
-        </span>
+        <span className="text-slate-500 font-semibold text-base">Age {age}</span>
       </div>
 
-      {/* ZuZu robot */}
-      <div
-        className="transition-all duration-500"
-        aria-live="polite"
-        aria-label={`ZuZu is ${zuZuExpression()}`}
-      >
+      <div className="transition-all duration-500" aria-live="polite" aria-label={`ZuZu is ${zuZuExpression()}`}>
         <ZuZu expression={zuZuExpression()} size="small" />
       </div>
 
-      {/* Main content card */}
       <div className="w-full max-w-xl flex flex-col gap-5">
-
-        {/* Question input */}
         <div className="flex flex-col gap-3">
           <input
             ref={inputRef}
@@ -130,7 +128,6 @@ export default function AskScreen({ age, onReset }: AskScreenProps) {
             aria-label="Type your question for ZuZu"
           />
 
-          {/* Ask button */}
           <button
             onClick={handleAsk}
             disabled={!question.trim() || screenState === 'loading'}
@@ -152,21 +149,15 @@ export default function AskScreen({ age, onReset }: AskScreenProps) {
           </button>
         </div>
 
-        {/* Answer card */}
         {(screenState === 'answered' || screenState === 'error') && result && (
-          <div
-            ref={answerRef}
-            className="animate-fade-in"
-          >
-            <div
-              className={`
-                rounded-3xl p-6 shadow-md
-                ${result.wasRedirected
-                  ? 'bg-amber-50 border-2 border-amber-200'
-                  : 'bg-white border-2 border-zuzu-teal-bg'
-                }
-              `}
-            >
+          <div ref={answerRef} className="animate-fade-in">
+            <div className={`
+              rounded-3xl p-6 shadow-md
+              ${result.wasRedirected
+                ? 'bg-amber-50 border-2 border-amber-200'
+                : 'bg-white border-2 border-zuzu-teal-bg'
+              }
+            `}>
               {result.wasRedirected && (
                 <div className="flex items-center gap-2 mb-3">
                   <span className="text-2xl">💙</span>
@@ -178,7 +169,6 @@ export default function AskScreen({ age, onReset }: AskScreenProps) {
               </p>
             </div>
 
-            {/* Ask another button */}
             <button
               onClick={handleAskAnother}
               className="

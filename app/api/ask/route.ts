@@ -2,12 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { containsSafetyKeyword, SOFT_REDIRECT_MESSAGE } from '@/lib/safety-keywords';
 import { buildSystemPrompt } from '@/lib/system-prompt';
+import { logUsage, detectDeviceType } from '@/lib/db';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface AskResponse {
   answer: string;
   wasRedirected: boolean;
+  logId: number | null;
 }
 
 // ── Rate limiter ──────────────────────────────────────────────────────────────
@@ -42,71 +44,73 @@ function getClientIp(request: NextRequest): string {
 }
 
 // ── Gemini client ─────────────────────────────────────────────────────────────
-// Instantiated at module level so it's reused across requests in the same process.
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY ?? '');
 
 // ── Route handler ─────────────────────────────────────────────────────────────
 
 export async function POST(request: NextRequest): Promise<NextResponse<AskResponse>> {
-  // Rate limit check
   const ip = getClientIp(request);
   if (isRateLimited(ip)) {
     return NextResponse.json(
-      {
-        answer: "ZuZu needs a little rest after so many questions! Try again in a minute. 😊",
-        wasRedirected: false,
-      },
+      { answer: "ZuZu needs a little rest after so many questions! Try again in a minute. 😊", wasRedirected: false, logId: null },
       { status: 429 }
     );
   }
 
-  // Parse and validate body
   let body: unknown;
   try {
     body = await request.json();
   } catch {
     return NextResponse.json(
-      { answer: "Something went wrong. Please try again!", wasRedirected: false },
+      { answer: "Something went wrong. Please try again!", wasRedirected: false, logId: null },
       { status: 400 }
     );
   }
 
   if (
-    typeof body !== 'object' ||
-    body === null ||
-    !('question' in body) ||
-    !('age' in body)
+    typeof body !== 'object' || body === null ||
+    !('question' in body) || !('age' in body)
   ) {
     return NextResponse.json(
-      { answer: "Something went wrong. Please try again!", wasRedirected: false },
+      { answer: "Something went wrong. Please try again!", wasRedirected: false, logId: null },
       { status: 400 }
     );
   }
 
-  const { question, age } = body as Record<string, unknown>;
+  const { question, age, sessionToken } = body as Record<string, unknown>;
 
   if (typeof question !== 'string' || question.trim().length === 0 || question.length > 500) {
     return NextResponse.json(
-      { answer: "Please ask ZuZu a question (up to 500 characters)!", wasRedirected: false },
+      { answer: "Please ask ZuZu a question (up to 500 characters)!", wasRedirected: false, logId: null },
       { status: 400 }
     );
   }
 
   if (typeof age !== 'number' || !Number.isInteger(age) || age < 6 || age > 15) {
     return NextResponse.json(
-      { answer: "Something went wrong with your age. Please refresh and try again!", wasRedirected: false },
+      { answer: "Something went wrong with your age. Please refresh and try again!", wasRedirected: false, logId: null },
       { status: 400 }
     );
   }
 
+  const token = typeof sessionToken === 'string' && sessionToken.length > 0
+    ? sessionToken
+    : 'unknown';
+
+  const deviceType = detectDeviceType(request.headers.get('user-agent') ?? '');
+
   // ── Layer 1: pre-API keyword safety check ─────────────────────────────────
-  // Catches obviously inappropriate topics before spending API tokens.
   if (containsSafetyKeyword(question)) {
-    return NextResponse.json({
-      answer: SOFT_REDIRECT_MESSAGE,
+    const logId = await logUsage({
+      sessionToken: token,
+      userAge: age,
+      deviceType,
+      childQuestion: question.trim(),
+      zuzuResponse: SOFT_REDIRECT_MESSAGE,
       wasRedirected: true,
     });
+    return NextResponse.json({ answer: SOFT_REDIRECT_MESSAGE, wasRedirected: true, logId });
   }
 
   // ── Layer 2: Gemini API call with safety system prompt ────────────────────
@@ -128,19 +132,24 @@ export async function POST(request: NextRequest): Promise<NextResponse<AskRespon
     const result = await model.generateContent(question.trim());
     const answer = result.response.text().trim();
 
-    // Detect if the model issued its own soft-redirect (contains the key phrase)
     const wasRedirected =
       answer.includes("ask a grown-up you trust") ||
       answer.includes("parent or teacher");
 
-    return NextResponse.json({ answer, wasRedirected });
+    const logId = await logUsage({
+      sessionToken: token,
+      userAge: age,
+      deviceType,
+      childQuestion: question.trim(),
+      zuzuResponse: answer,
+      wasRedirected,
+    });
+
+    return NextResponse.json({ answer, wasRedirected, logId });
   } catch (error) {
     console.error('Gemini API error:', error);
     return NextResponse.json(
-      {
-        answer: "ZuZu is taking a little nap right now — try again in a moment! 💤",
-        wasRedirected: false,
-      },
+      { answer: "ZuZu is taking a little nap right now — try again in a moment! 💤", wasRedirected: false, logId: null },
       { status: 503 }
     );
   }
