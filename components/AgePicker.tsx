@@ -39,75 +39,83 @@ export default function AgePicker({ onAgeSelected }: AgePickerProps) {
   const nextAge = selectedAge < MAX_AGE ? selectedAge + 1 : null;
 
   return (
-    <div className="min-h-screen bg-zuzu-bg flex flex-col items-center px-6 pt-10 pb-8 gap-5">
+    // 100dvh = actual visible viewport on mobile (excludes browser chrome)
+    <div className="bg-zuzu-bg flex flex-col px-6" style={{ minHeight: '100dvh' }}>
 
-      <div className="animate-pop-in">
-        <ZuZu expression="idle" size="small" />
-      </div>
+      {/* Scrollable content — centered vertically in remaining space */}
+      <div className="flex-1 flex flex-col items-center justify-center gap-5 py-8">
 
-      <div className="text-center animate-fade-in">
-        <h1 className="text-3xl font-extrabold text-zuzu-teal-dark leading-tight">
-          Hi! I&apos;m ZuZu!
-        </h1>
-        <p className="text-xl text-slate-600 font-semibold mt-1">
-          How old are you?
-        </p>
-      </div>
-
-      {/* Drum-roll age picker — swipe left/right on touch, arrows on desktop */}
-      <div
-        className="animate-fade-in flex items-center justify-center gap-3 w-full select-none"
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-      >
-        <button
-          onClick={decrement}
-          disabled={selectedAge === MIN_AGE}
-          aria-label="Decrease age"
-          className="text-zuzu-teal font-black text-5xl w-10 flex items-center justify-center disabled:opacity-20 transition-opacity focus:outline-none"
-        >
-          ‹
-        </button>
-
-        <span className="text-3xl font-extrabold text-slate-300 w-10 text-center">
-          {prevAge ?? ''}
-        </span>
-
-        {/* Selected age box */}
-        <div className="w-28 h-28 rounded-3xl bg-white border-3 border-zuzu-teal-bg shadow-lg flex items-center justify-center">
-          <span className="text-6xl font-extrabold text-zuzu-teal leading-none">{selectedAge}</span>
+        <div className="animate-pop-in">
+          <ZuZu expression="idle" size="small" />
         </div>
 
-        <span className="text-3xl font-extrabold text-slate-300 w-10 text-center">
-          {nextAge ?? ''}
-        </span>
+        <div className="text-center animate-fade-in">
+          <h1 className="text-3xl font-extrabold text-zuzu-teal-dark leading-tight">
+            Hi! I&apos;m ZuZu!
+          </h1>
+          <p className="text-xl text-slate-600 font-semibold mt-1">
+            How old are you?
+          </p>
+        </div>
 
-        <button
-          onClick={increment}
-          disabled={selectedAge === MAX_AGE}
-          aria-label="Increase age"
-          className="text-zuzu-teal font-black text-5xl w-10 flex items-center justify-center disabled:opacity-20 transition-opacity focus:outline-none"
+        {/* Drum-roll age picker */}
+        <div
+          className="animate-fade-in flex items-center justify-center gap-3 w-full select-none"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
         >
-          ›
+          <button
+            onClick={decrement}
+            disabled={selectedAge === MIN_AGE}
+            aria-label="Decrease age"
+            className="text-zuzu-teal font-black text-5xl w-10 flex items-center justify-center disabled:opacity-20 transition-opacity focus:outline-none"
+          >
+            ‹
+          </button>
+
+          <span className="text-3xl font-extrabold text-slate-300 w-10 text-center">
+            {prevAge ?? ''}
+          </span>
+
+          <div className="w-28 h-28 rounded-3xl bg-white border-3 border-zuzu-teal-bg shadow-lg flex items-center justify-center">
+            <span className="text-6xl font-extrabold text-zuzu-teal leading-none">{selectedAge}</span>
+          </div>
+
+          <span className="text-3xl font-extrabold text-slate-300 w-10 text-center">
+            {nextAge ?? ''}
+          </span>
+
+          <button
+            onClick={increment}
+            disabled={selectedAge === MAX_AGE}
+            aria-label="Increase age"
+            className="text-zuzu-teal font-black text-5xl w-10 flex items-center justify-center disabled:opacity-20 transition-opacity focus:outline-none"
+          >
+            ›
+          </button>
+        </div>
+
+      </div>
+
+      {/* Button pinned to the bottom — always fully visible */}
+      <div className="pb-8 pt-4">
+        <button
+          onClick={() => onAgeSelected(selectedAge)}
+          className="
+            animate-gentle-bounce
+            w-full bg-zuzu-amber hover:bg-zuzu-amber-dark active:scale-95
+            text-white font-extrabold text-3xl
+            rounded-3xl shadow-lg shadow-amber-200
+            transition-colors duration-150
+            focus:outline-none focus:ring-4 focus:ring-amber-300
+          "
+          style={{ paddingTop: '1.75rem', paddingBottom: '1.75rem' }}
+          aria-label={`Continue as age ${selectedAge}`}
+        >
+          Let&apos;s go! 🚀
         </button>
       </div>
 
-      {/* Let's go — mt-auto sticks it to the bottom */}
-      <button
-        onClick={() => onAgeSelected(selectedAge)}
-        className="
-          animate-gentle-bounce mt-auto
-          w-full bg-zuzu-amber hover:bg-zuzu-amber-dark active:scale-95
-          text-white font-extrabold text-3xl
-          py-7 rounded-3xl
-          shadow-lg shadow-amber-200
-          transition-colors duration-150
-          focus:outline-none focus:ring-4 focus:ring-amber-300
-        "
-        aria-label={`Continue as age ${selectedAge}`}
-      >
-        Let&apos;s go! 🚀
-      </button>
     </div>
   );
 }
