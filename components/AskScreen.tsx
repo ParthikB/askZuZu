@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import Link from 'next/link';
 import ZuZu, { ZuZuExpression } from './ZuZu';
 import { pickMysteryQuestion } from '@/lib/mystery-questions';
 import AnnotatedAnswer from './AnnotatedAnswer';
@@ -340,6 +341,17 @@ export default function AskScreen({ age, sessionToken, onReset }: AskScreenProps
           </div>
         )}
       </div>
+
+      {/* Footer */}
+      <footer className="mt-auto pt-2 pb-1">
+        <Link
+          href="/privacy"
+          className="text-slate-400 hover:text-zuzu-teal text-sm font-semibold transition-colors focus:outline-none focus:underline"
+        >
+          Privacy Policy
+        </Link>
+      </footer>
+
     </div>
   );
 }
