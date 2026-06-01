@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import ZuZu, { ZuZuExpression } from './ZuZu';
+import { pickMysteryQuestion } from '@/lib/mystery-questions';
 
 interface AskScreenProps {
   age: number;
@@ -57,8 +58,15 @@ export default function AskScreen({ age, sessionToken, onReset }: AskScreenProps
     return 'idle';
   };
 
-  async function handleAsk() {
-    const trimmed = question.trim();
+  function handleMystery() {
+    if (screenState === 'loading') return;
+    const q = pickMysteryQuestion(age);
+    setQuestion(q);
+    handleAsk(q);
+  }
+
+  async function handleAsk(questionOverride?: string) {
+    const trimmed = (questionOverride ?? question).trim();
     if (!trimmed || screenState === 'loading') return;
     setScreenState('loading');
     setResult(null);
@@ -151,24 +159,42 @@ export default function AskScreen({ age, sessionToken, onReset }: AskScreenProps
 
       <div className="w-full max-w-xl flex flex-col gap-5">
         <div className="flex flex-col gap-3">
-          <input
-            ref={inputRef}
-            type="text"
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder="What do you want to know?"
-            maxLength={500}
-            disabled={screenState === 'loading'}
-            className="
-              w-full text-xl font-semibold bg-white border-3 border-zuzu-teal-bg
-              rounded-3xl px-6 py-5 placeholder:text-slate-300 text-slate-700
-              focus:outline-none focus:ring-4 focus:ring-teal-200 focus:border-zuzu-teal
-              disabled:opacity-60 disabled:cursor-not-allowed shadow-sm transition-all duration-150
-            "
-          />
+          <div className="flex gap-2 items-stretch">
+            <input
+              ref={inputRef}
+              type="text"
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="What do you want to know?"
+              maxLength={500}
+              disabled={screenState === 'loading'}
+              className="
+                flex-1 text-xl font-semibold bg-white border-3 border-zuzu-teal-bg
+                rounded-3xl px-6 py-5 placeholder:text-slate-300 text-slate-700
+                focus:outline-none focus:ring-4 focus:ring-teal-200 focus:border-zuzu-teal
+                disabled:opacity-60 disabled:cursor-not-allowed shadow-sm transition-all duration-150
+              "
+            />
+            <button
+              onClick={handleMystery}
+              disabled={screenState === 'loading'}
+              title="Mystery question"
+              aria-label="Pick a random mystery question"
+              className="
+                w-16 shrink-0 rounded-3xl border-3 border-zuzu-teal-bg bg-white
+                text-3xl flex items-center justify-center shadow-sm
+                hover:bg-zuzu-teal-bg active:scale-95
+                disabled:opacity-50 disabled:cursor-not-allowed
+                transition-all duration-150
+                focus:outline-none focus:ring-4 focus:ring-teal-200
+              "
+            >
+              🎲
+            </button>
+          </div>
           <button
-            onClick={handleAsk}
+            onClick={() => handleAsk()}
             disabled={!question.trim() || screenState === 'loading'}
             className={`
               w-full font-extrabold text-2xl px-8 py-5 rounded-3xl shadow-lg
