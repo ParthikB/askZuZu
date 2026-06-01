@@ -5,7 +5,6 @@ export const metadata: Metadata = {
   title: 'askZuZu — Ask your robot friend anything!',
   description:
     'ZuZu is a friendly robot who loves answering curious questions from kids aged 6–15. Safe, age-appropriate, and always kind.',
-  icons: { icon: '/favicon.ico' },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
