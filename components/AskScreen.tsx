@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import ZuZu, { ZuZuExpression } from './ZuZu';
 import { pickMysteryQuestion } from '@/lib/mystery-questions';
+import AnnotatedAnswer from './AnnotatedAnswer';
 
 interface AskScreenProps {
   age: number;
@@ -225,9 +226,7 @@ export default function AskScreen({ age, sessionToken, onReset }: AskScreenProps
                   <span className="text-amber-700 font-bold text-base">ZuZu says</span>
                 </div>
               )}
-              <p className="text-slate-700 text-xl font-semibold leading-relaxed">
-                {result.answer}
-              </p>
+              <AnnotatedAnswer text={result.answer} />
             </div>
 
             {/* Feedback section — only shown when there's a logId to attach it to */}
