@@ -21,3 +21,13 @@ CREATE INDEX IF NOT EXISTS idx_usage_logs_timestamp ON usage_logs (timestamp);
 -- If upgrading an existing table, run these separately:
 -- ALTER TABLE usage_logs ADD COLUMN IF NOT EXISTS feedback_rating TEXT;
 -- ALTER TABLE usage_logs ADD COLUMN IF NOT EXISTS feedback_tags TEXT[];
+
+-- Lightweight first-visit tracker (no PII — only timestamp + device type).
+-- Populated once per browser via the zuzu_visited localStorage flag.
+CREATE TABLE IF NOT EXISTS unique_opens (
+  id          SERIAL       PRIMARY KEY,
+  timestamp   TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  device_type TEXT         NOT NULL   -- 'mobile' | 'desktop'
+);
+
+CREATE INDEX IF NOT EXISTS idx_unique_opens_timestamp ON unique_opens (timestamp);

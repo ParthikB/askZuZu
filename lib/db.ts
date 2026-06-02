@@ -79,6 +79,20 @@ export async function updateFeedback(
   }
 }
 
+/**
+ * Records a first-visit open. Called at most once per browser
+ * (enforced client-side via the zuzu_visited localStorage key).
+ * Stores only timestamp (auto-set by DB) + device type — no PII.
+ */
+export async function logUniqueOpen(deviceType: DeviceType): Promise<void> {
+  if (!sql) return;
+  try {
+    await sql`INSERT INTO unique_opens (device_type) VALUES (${deviceType})`;
+  } catch (err) {
+    console.error('DB logUniqueOpen error:', err);
+  }
+}
+
 /** Derives 'mobile' or 'desktop' from a User-Agent string. */
 export function detectDeviceType(userAgent: string): DeviceType {
   return /mobile|android|iphone|ipad|tablet/i.test(userAgent) ? 'mobile' : 'desktop';

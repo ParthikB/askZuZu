@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import AgePicker from '@/components/AgePicker';
 import AskScreen from '@/components/AskScreen';
 
@@ -11,6 +11,14 @@ export default function Home() {
   const [age, setAge] = useState<number>(10);
   // In-memory session token — resets on page refresh, never stored persistently.
   const [sessionToken] = useState<string>(() => crypto.randomUUID());
+
+  // First-visit tracker — fires once per browser, fire-and-forget.
+  useEffect(() => {
+    if (!localStorage.getItem('zuzu_visited')) {
+      localStorage.setItem('zuzu_visited', 'true');
+      fetch('/api/log/open', { method: 'POST' }).catch(() => {});
+    }
+  }, []);
 
   function handleAgeSelected(selectedAge: number) {
     setAge(selectedAge);
