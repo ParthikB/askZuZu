@@ -33,3 +33,14 @@ CREATE TABLE IF NOT EXISTS unique_opens (
 );
 
 CREATE INDEX IF NOT EXISTS idx_unique_opens_timestamp ON unique_opens (timestamp);
+
+-- Every session open — new and repeat. Used to calculate repeat rate.
+-- is_repeat = false on first visit, true on every subsequent visit.
+CREATE TABLE IF NOT EXISTS session_opens (
+  id          SERIAL       PRIMARY KEY,
+  timestamp   TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  device_type TEXT         NOT NULL,  -- 'mobile' | 'desktop'
+  is_repeat   BOOLEAN      NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_session_opens_timestamp ON session_opens (timestamp);

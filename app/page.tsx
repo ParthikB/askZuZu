@@ -12,12 +12,18 @@ export default function Home() {
   // In-memory session token — resets on page refresh, never stored persistently.
   const [sessionToken] = useState<string>(() => crypto.randomUUID());
 
-  // First-visit tracker — fires once per browser, fire-and-forget.
+  // Session tracker — fires on every load to capture repeat rate.
   useEffect(() => {
-    if (!localStorage.getItem('zuzu_visited')) {
+    const isRepeat = !!localStorage.getItem('zuzu_visited');
+    if (!isRepeat) {
       localStorage.setItem('zuzu_visited', 'true');
       fetch('/api/log/open', { method: 'POST' }).catch(() => {});
     }
+    fetch('/api/log/session', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isRepeat }),
+    }).catch(() => {});
   }, []);
 
   function handleAgeSelected(selectedAge: number) {

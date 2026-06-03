@@ -97,6 +97,19 @@ export async function logWordClick(logId: number, word: string): Promise<void> {
 }
 
 /**
+ * Records every session open (new and repeat).
+ * is_repeat = false on first visit, true on every return visit.
+ */
+export async function logSessionOpen(deviceType: DeviceType, isRepeat: boolean): Promise<void> {
+  if (!sql) return;
+  try {
+    await sql`INSERT INTO session_opens (device_type, is_repeat) VALUES (${deviceType}, ${isRepeat})`;
+  } catch (err) {
+    console.error('DB logSessionOpen error:', err);
+  }
+}
+
+/**
  * Records a first-visit open. Called at most once per browser
  * (enforced client-side via the zuzu_visited localStorage key).
  * Stores only timestamp (auto-set by DB) + device type — no PII.
