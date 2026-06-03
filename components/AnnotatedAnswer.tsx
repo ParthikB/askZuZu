@@ -25,7 +25,7 @@ function parse(text: string): Segment[] {
   return out;
 }
 
-export default function AnnotatedAnswer({ text }: { text: string }) {
+export default function AnnotatedAnswer({ text, logId }: { text: string; logId: number | null }) {
   const [active, setActive] = useState<number | null>(null);
 
   // Close on any outside click while a tooltip is open
@@ -53,7 +53,15 @@ export default function AnnotatedAnswer({ text }: { text: string }) {
               type="button"
               onClick={(e) => {
                 e.stopPropagation();
-                setActive(isOpen ? null : seg.index);
+                const opening = !isOpen;
+                setActive(opening ? seg.index : null);
+                if (opening && logId) {
+                  fetch('/api/log/word-click', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ logId, word: seg.word }),
+                  }).catch(() => {});
+                }
               }}
               aria-expanded={isOpen}
               aria-label={`Tap to learn what "${seg.word}" means`}

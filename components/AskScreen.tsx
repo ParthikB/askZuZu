@@ -227,7 +227,7 @@ export default function AskScreen({ age, sessionToken, onReset }: AskScreenProps
                   <span className="text-amber-700 font-bold text-base">ZuZu says</span>
                 </div>
               )}
-              <AnnotatedAnswer text={result.answer} />
+              <AnnotatedAnswer text={result.answer} logId={result.logId} />
             </div>
 
             {/* Feedback section — only shown when there's a logId to attach it to */}

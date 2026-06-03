@@ -80,6 +80,23 @@ export async function updateFeedback(
 }
 
 /**
+ * Appends a tapped vocabulary word to the word_clicks array for a log row.
+ * Uses array_append so multiple clicks within one answer accumulate.
+ */
+export async function logWordClick(logId: number, word: string): Promise<void> {
+  if (!sql) return;
+  try {
+    await sql`
+      UPDATE usage_logs
+      SET word_clicks = array_append(COALESCE(word_clicks, '{}'), ${word})
+      WHERE id = ${logId}
+    `;
+  } catch (err) {
+    console.error('DB logWordClick error:', err);
+  }
+}
+
+/**
  * Records a first-visit open. Called at most once per browser
  * (enforced client-side via the zuzu_visited localStorage key).
  * Stores only timestamp (auto-set by DB) + device type — no PII.

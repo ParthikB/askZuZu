@@ -12,7 +12,8 @@ CREATE TABLE IF NOT EXISTS usage_logs (
   was_redirected       BOOLEAN      NOT NULL DEFAULT FALSE,
   time_spent_seconds   INTEGER,                      -- NULL until user clicks "Ask another"
   feedback_rating      TEXT,                         -- 'up' | 'down' | NULL
-  feedback_tags        TEXT[]                        -- e.g. {'Response was boring'}
+  feedback_tags        TEXT[],                       -- e.g. {'Response was boring'}
+  word_clicks          TEXT[]                        -- vocabulary badges tapped, e.g. {'photosynthesis'}
 );
 
 CREATE INDEX IF NOT EXISTS idx_usage_logs_session   ON usage_logs (session_token);
@@ -21,6 +22,7 @@ CREATE INDEX IF NOT EXISTS idx_usage_logs_timestamp ON usage_logs (timestamp);
 -- If upgrading an existing table, run these separately:
 -- ALTER TABLE usage_logs ADD COLUMN IF NOT EXISTS feedback_rating TEXT;
 -- ALTER TABLE usage_logs ADD COLUMN IF NOT EXISTS feedback_tags TEXT[];
+-- ALTER TABLE usage_logs ADD COLUMN IF NOT EXISTS word_clicks TEXT[];
 
 -- Lightweight first-visit tracker (no PII — only timestamp + device type).
 -- Populated once per browser via the zuzu_visited localStorage flag.
