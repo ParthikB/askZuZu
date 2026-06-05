@@ -160,58 +160,60 @@ export default function AskScreen({ age, sessionToken, onReset }: AskScreenProps
       </div>
 
       <div className="w-full max-w-xl flex flex-col gap-5">
-        <div className="flex flex-col gap-3">
-          <div className="flex gap-2 items-stretch">
-            <input
-              ref={inputRef}
-              type="text"
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="What do you want to know?"
-              maxLength={500}
-              disabled={screenState === 'loading'}
-              className="
-                flex-1 text-xl font-semibold bg-white border-3 border-zuzu-teal-bg
-                rounded-3xl px-6 py-5 placeholder:text-slate-300 text-slate-700
-                focus:outline-none focus:ring-4 focus:ring-teal-200 focus:border-zuzu-teal
-                disabled:opacity-60 disabled:cursor-not-allowed shadow-sm transition-all duration-150
-              "
-            />
+
+        {/* Idle: show input + controls. Otherwise: show submitted question as text. */}
+        {screenState === 'idle' ? (
+          <div className="flex flex-col gap-3">
+            <div className="flex gap-2 items-stretch">
+              <input
+                ref={inputRef}
+                type="text"
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                onKeyDown={handleKeyDown}
+                placeholder="What do you want to know?"
+                maxLength={500}
+                className="
+                  flex-1 text-xl font-semibold bg-white border-3 border-zuzu-teal-bg
+                  rounded-3xl px-6 py-5 placeholder:text-slate-300 text-slate-700
+                  focus:outline-none focus:ring-4 focus:ring-teal-200 focus:border-zuzu-teal
+                  shadow-sm transition-all duration-150
+                "
+              />
+              <button
+                onClick={handleMystery}
+                title="Mystery question"
+                aria-label="Pick a random mystery question"
+                className="
+                  w-16 shrink-0 rounded-3xl border-3 border-zuzu-teal-bg bg-white
+                  text-3xl flex items-center justify-center shadow-sm
+                  hover:bg-zuzu-teal-bg active:scale-95
+                  transition-all duration-150
+                  focus:outline-none focus:ring-4 focus:ring-teal-200
+                "
+              >
+                🎲
+              </button>
+            </div>
             <button
-              onClick={handleMystery}
-              disabled={screenState === 'loading'}
-              title="Mystery question"
-              aria-label="Pick a random mystery question"
+              onClick={() => handleAsk()}
+              disabled={!question.trim()}
               className="
-                w-16 shrink-0 rounded-3xl border-3 border-zuzu-teal-bg bg-white
-                text-3xl flex items-center justify-center shadow-sm
-                hover:bg-zuzu-teal-bg active:scale-95
-                disabled:opacity-50 disabled:cursor-not-allowed
-                transition-all duration-150
-                focus:outline-none focus:ring-4 focus:ring-teal-200
+                w-full font-extrabold text-2xl px-8 py-5 rounded-3xl shadow-lg
+                bg-zuzu-teal hover:bg-zuzu-teal-dark active:scale-95 text-white
+                shadow-teal-200 animate-gentle-bounce
+                transition-all duration-150 focus:outline-none focus:ring-4 focus:ring-teal-300
+                disabled:opacity-50 disabled:cursor-not-allowed disabled:animate-none
               "
             >
-              🎲
+              Ask ZuZu! ✨
             </button>
           </div>
-          <button
-            onClick={() => handleAsk()}
-            disabled={!question.trim() || screenState === 'loading'}
-            className={`
-              w-full font-extrabold text-2xl px-8 py-5 rounded-3xl shadow-lg
-              transition-all duration-150 focus:outline-none focus:ring-4 focus:ring-teal-300
-              ${screenState === 'loading'
-                ? 'bg-slate-300 text-slate-400 cursor-not-allowed'
-                : !question.trim()
-                  ? 'bg-zuzu-teal opacity-50 text-white cursor-not-allowed'
-                  : 'bg-zuzu-teal hover:bg-zuzu-teal-dark active:scale-95 text-white shadow-teal-200 animate-gentle-bounce'
-              }
-            `}
-          >
-            {screenState === 'loading' ? '🤔  Thinking…' : 'Ask ZuZu! ✨'}
-          </button>
-        </div>
+        ) : (
+          <div className="bg-white border-3 border-zuzu-teal-bg rounded-3xl px-6 py-5 shadow-sm">
+            <p className="text-slate-700 text-xl font-semibold">{question}</p>
+          </div>
+        )}
 
         {(screenState === 'answered' || screenState === 'error') && result && (
           <div ref={answerRef} className="animate-fade-in flex flex-col gap-3">
