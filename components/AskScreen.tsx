@@ -5,6 +5,7 @@ import Link from 'next/link';
 import ZuZu, { ZuZuExpression } from './ZuZu';
 import { pickMysteryQuestion } from '@/lib/mystery-questions';
 import AnnotatedAnswer from './AnnotatedAnswer';
+import ParentFeedbackModal from './ParentFeedbackModal';
 
 interface AskScreenProps {
   age: number;
@@ -34,6 +35,7 @@ export default function AskScreen({ age, sessionToken, onReset }: AskScreenProps
   const [answerDisplayedAt, setAnswerDisplayedAt] = useState<number | null>(null);
   const [feedbackState, setFeedbackState] = useState<FeedbackState>('none');
   const [selectedTags, setSelectedTags]   = useState<Set<string>>(new Set());
+  const [showFeedback, setShowFeedback] = useState(false);
   const answerRef = useRef<HTMLDivElement>(null);
   const inputRef  = useRef<HTMLInputElement>(null);
 
@@ -345,14 +347,23 @@ export default function AskScreen({ age, sessionToken, onReset }: AskScreenProps
       </div>
 
       {/* Footer */}
-      <footer className="mt-auto pt-2 pb-1">
+      <footer className="mt-auto pt-2 pb-1 flex items-center justify-center gap-5">
         <Link
           href="/privacy"
           className="text-slate-400 hover:text-zuzu-teal text-sm font-semibold transition-colors focus:outline-none focus:underline"
         >
           Privacy Policy
         </Link>
+        <span className="text-slate-300 text-sm">·</span>
+        <button
+          onClick={() => setShowFeedback(true)}
+          className="text-slate-400 hover:text-zuzu-teal text-sm font-semibold transition-colors focus:outline-none focus:underline"
+        >
+          💬 Parent Feedback
+        </button>
       </footer>
+
+      {showFeedback && <ParentFeedbackModal onClose={() => setShowFeedback(false)} />}
 
     </div>
   );

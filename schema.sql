@@ -24,6 +24,14 @@ CREATE INDEX IF NOT EXISTS idx_usage_logs_timestamp ON usage_logs (timestamp);
 -- ALTER TABLE usage_logs ADD COLUMN IF NOT EXISTS feedback_tags TEXT[];
 -- ALTER TABLE usage_logs ADD COLUMN IF NOT EXISTS word_clicks TEXT[];
 
+-- Parent feedback collected via the in-app modal.
+CREATE TABLE IF NOT EXISTS zuzu_feedback (
+  id           SERIAL       PRIMARY KEY,
+  rating       INTEGER      NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  suggestions  TEXT         NOT NULL DEFAULT '',
+  created_at   TIMESTAMPTZ  NOT NULL DEFAULT NOW()
+);
+
 -- Lightweight first-visit tracker (no PII — only timestamp + device type).
 -- Populated once per browser via the zuzu_visited localStorage flag.
 CREATE TABLE IF NOT EXISTS unique_opens (

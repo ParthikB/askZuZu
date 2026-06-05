@@ -80,6 +80,18 @@ export async function updateFeedback(
 }
 
 /**
+ * Inserts a parent feedback submission into zuzu_feedback.
+ */
+export async function insertParentFeedback(rating: number, suggestions: string): Promise<void> {
+  if (!sql) return;
+  try {
+    await sql`INSERT INTO zuzu_feedback (rating, suggestions) VALUES (${rating}, ${suggestions})`;
+  } catch (err) {
+    console.error('DB insertParentFeedback error:', err);
+  }
+}
+
+/**
  * Appends a tapped vocabulary word to the word_clicks array for a log row.
  * Uses array_append so multiple clicks within one answer accumulate.
  */
